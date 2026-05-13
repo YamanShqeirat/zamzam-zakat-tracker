@@ -65,8 +65,8 @@ Before you build, you'll need:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/zamzam-zakat-tracker.git
-cd zamzam
+git clone https://github.com/YamanShqeirat/zamzam-zakat-tracker.git
+cd zamzam-zakat-tracker
 ```
 
 ### 2. Open in Xcode
@@ -75,7 +75,23 @@ cd zamzam
 open zakat-al-mal-app.xcodeproj
 ```
 
-### 3. Configure signing
+### 3. Rename the bundle identifiers and App Group
+
+The project ships with bundle identifiers and an App Group under the `com.yamanshqeirat.*` namespace. Apple requires these to be globally unique, so a fresh clone **will not build until you rename them** to your own reverse-DNS namespace (e.g. `com.yourname.*`).
+
+Find-and-replace `yamanshqeirat` with your namespace in these locations:
+
+| File | What to change |
+|------|----------------|
+| `zakat-al-mal-app/Services/SharedAppGroup.swift` | App Group identifier |
+| `ZakatWidget/SharedAppGroup.swift` | App Group identifier (must match the line above) |
+| `zakat-al-mal-app/zakat-al-mal-app.entitlements` | App Group entry |
+| `ZakatWidgetExtension.entitlements` | App Group entry |
+| `zakat-al-mal-app/Services/BackgroundSyncService.swift` | `BGTask` identifier `com.yamanshqeirat.zakat-al-mal-app.dailysync` |
+| `zakat-al-mal-app.xcodeproj/project.pbxproj` | `PRODUCT_BUNDLE_IDENTIFIER` for both the app and widget targets |
+| `zakat-al-mal-app/Info.plist` | `BGTaskSchedulerPermittedIdentifiers` (must match `BackgroundSyncService.swift`) |
+
+### 4. Configure signing
 
 In Xcode:
 - Select the project in the navigator (top-level blue icon)
@@ -84,20 +100,18 @@ In Xcode:
 - Under **Team**, select your Apple Developer account
 - Xcode will automatically create a provisioning profile
 
-Repeat for the **Widget Extension** target if present.
+Repeat for the **ZakatWidgetExtension** target.
 
-### 4. Create an App Group
+### 5. Register the App Group
 
-The main app and widget share data through an App Group:
+The main app and widget share data through an App Group, which must be registered under your Apple Developer account:
 
 1. Go to the [Apple Developer Portal](https://developer.apple.com/account/resources/identifiers/list/applicationGroup)
-2. Create a new App Group with identifier: `group.com.YOURNAME.zakat-al-mal-app`
-3. In Xcode → target → **Signing & Capabilities** → click **+ Capability** → add **App Groups**
-4. Select the App Group you just created
-5. Do the same for the Widget Extension target
-6. Update the App Group identifier in the code if it differs from the default
+2. Create a new App Group with the identifier you used in step 3 (e.g. `group.com.yourname.zakat-al-mal-app`)
+3. In Xcode → **zakat-al-mal-app** target → **Signing & Capabilities** → click **+ Capability** → add **App Groups**, then check the group you just created
+4. Repeat for the **ZakatWidgetExtension** target — both must point at the same group
 
-### 5. Get your API keys
+### 6. Get your API keys
 
 **SimpleFIN:**
 1. Sign up at [beta-bridge.simplefin.org](https://beta-bridge.simplefin.org)
@@ -110,7 +124,7 @@ The main app and widget share data through an App Group:
 2. Copy your API key from the dashboard
 3. Add it to the app's Settings screen on first launch
 
-### 6. Build and run
+### 7. Build and run
 
 1. Connect your iPhone or select a simulator
 2. Press `Cmd + R` or click the Play button
