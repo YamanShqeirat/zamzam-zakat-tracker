@@ -39,9 +39,9 @@ Three linked accounts via SimpleFIN, plus manual entry:
 
 | Account | Institution | Type | What's Zakatable |
 |---------|------------|------|-----------------|
-| Brokerage | E*TRADE (Morgan Stanley) | Investment | Full balance (stocks, ETFs, cash) |
-| Brokerage | Robinhood | Investment | Full balance (stocks, ETFs, crypto, cash) |
-| Banking | Desert Financial Credit Union | Checking/Savings | Full balance |
+| Brokerage | Brokerage A | Investment | Full balance (stocks, ETFs, cash) |
+| Brokerage | Brokerage B | Investment | Full balance (stocks, ETFs, crypto, cash) |
+| Banking | Bank/Credit Union | Checking/Savings | Full balance |
 | Manual | Physical cash, gold, silver | Various | User-entered amounts |
 
 ### Future: Retirement Accounts
@@ -61,7 +61,7 @@ import Foundation
 @Model
 final class Asset {
     var id: UUID
-    var name: String                    // "E*TRADE Brokerage", "Physical Gold"
+    var name: String                    // e.g. "Brokerage Account", "Physical Gold"
     var category: AssetCategory
     var source: AssetSource
     var currentBalance: Decimal         // Latest balance from SimpleFIN or manual
@@ -477,7 +477,7 @@ The one-time setup flow for connecting SimpleFIN:
 
 ```
 1. User goes to https://beta-bridge.simplefin.org and signs up ($15/year)
-2. User connects their institutions (E*TRADE, Robinhood, Desert Financial)
+2. User connects their institutions (whichever brokerages/banks they use)
 3. User creates a "Setup Token" for the Zakat Tracker app
 4. In the app, user pastes the Setup Token
 5. App base64-decodes the token to get a claim URL
@@ -858,13 +858,13 @@ Shows all linked and manual assets with their current balances.
 ├─────────────────────────────────┤
 │  LINKED ACCOUNTS (SimpleFIN)    │
 │  ┌────────────────────────────┐ │
-│  │ 🏦 E*TRADE Brokerage      │ │
+│  │ 🏦 Brokerage A            │ │
 │  │    $28,450.00   synced 2h  │ │
 │  ├────────────────────────────┤ │
-│  │ 🏦 Robinhood              │ │
+│  │ 🏦 Brokerage B            │ │
 │  │    $12,300.00   synced 2h  │ │
 │  ├────────────────────────────┤ │
-│  │ 🏦 Desert Financial CU    │ │
+│  │ 🏦 Bank/Credit Union      │ │
 │  │    $5,082.00    synced 2h  │ │
 │  └────────────────────────────┘ │
 │                                 │
@@ -1234,7 +1234,7 @@ Follow this sequence — each step builds on the previous:
 ## CONFIGURATION NEEDED BEFORE FIRST RUN
 
 1. **SimpleFIN account**: Sign up at beta-bridge.simplefin.org ($15/year)
-2. **Connect institutions**: Add E*TRADE, Robinhood, Desert Financial in SimpleFIN
+2. **Connect institutions**: Add your brokerages and bank accounts in SimpleFIN
 3. **Create setup token**: Generate in SimpleFIN dashboard
 4. **GoldAPI.io key**: Sign up for free tier at goldapi.io
 5. **Apple Developer**: Create App ID with App Group capability
