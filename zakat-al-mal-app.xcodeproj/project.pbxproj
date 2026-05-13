@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		EDC8162B2FB53D6E0045BC85 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDC816102FB53CB20045BC85 /* WidgetKit.framework */; };
+		EDC8162C2FB53D6E0045BC85 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDC816122FB53CB20045BC85 /* SwiftUI.framework */; };
+		EDC816372FB53D6F0045BC85 /* ZakatWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EDC8162A2FB53D6E0045BC85 /* ZakatWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		ED171CBD2FB40F7100F5D8E3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,13 +27,48 @@
 			remoteGlobalIDString = ED171CAC2FB40F7000F5D8E3;
 			remoteInfo = "zakat-al-mal-app";
 		};
+		EDC816352FB53D6F0045BC85 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ED171CA52FB40F7000F5D8E3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EDC816292FB53D6E0045BC85;
+			remoteInfo = ZakatWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		EDC816212FB53CB30045BC85 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				EDC816372FB53D6F0045BC85 /* ZakatWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		ED171CAD2FB40F7000F5D8E3 /* ZamZam.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZamZam.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED171CBC2FB40F7100F5D8E3 /* zakat-al-mal-appTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "zakat-al-mal-appTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED171CC62FB40F7100F5D8E3 /* zakat-al-mal-appUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "zakat-al-mal-appUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		EDC816102FB53CB20045BC85 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		EDC816122FB53CB20045BC85 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		EDC8162A2FB53D6E0045BC85 /* ZakatWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZakatWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		EDC817E32FB540250045BC85 /* ZakatWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZakatWidgetExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		EDC816382FB53D6F0045BC85 /* Exceptions for "ZakatWidget" folder in "ZakatWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = EDC816292FB53D6E0045BC85 /* ZakatWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		ED171CAF2FB40F7000F5D8E3 /* zakat-al-mal-app */ = {
@@ -43,6 +84,14 @@
 		ED171CC92FB40F7100F5D8E3 /* zakat-al-mal-appUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "zakat-al-mal-appUITests";
+			sourceTree = "<group>";
+		};
+		EDC8162D2FB53D6E0045BC85 /* ZakatWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				EDC816382FB53D6F0045BC85 /* Exceptions for "ZakatWidget" folder in "ZakatWidgetExtension" target */,
+			);
+			path = ZakatWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,15 +118,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EDC816272FB53D6E0045BC85 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EDC8162C2FB53D6E0045BC85 /* SwiftUI.framework in Frameworks */,
+				EDC8162B2FB53D6E0045BC85 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		ED171CA42FB40F7000F5D8E3 = {
 			isa = PBXGroup;
 			children = (
+				EDC817E32FB540250045BC85 /* ZakatWidgetExtension.entitlements */,
 				ED171CAF2FB40F7000F5D8E3 /* zakat-al-mal-app */,
 				ED171CBF2FB40F7100F5D8E3 /* zakat-al-mal-appTests */,
 				ED171CC92FB40F7100F5D8E3 /* zakat-al-mal-appUITests */,
+				EDC8162D2FB53D6E0045BC85 /* ZakatWidget */,
+				EDC8160F2FB53CB20045BC85 /* Frameworks */,
 				ED171CAE2FB40F7000F5D8E3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,8 +149,18 @@
 				ED171CAD2FB40F7000F5D8E3 /* ZamZam.app */,
 				ED171CBC2FB40F7100F5D8E3 /* zakat-al-mal-appTests.xctest */,
 				ED171CC62FB40F7100F5D8E3 /* zakat-al-mal-appUITests.xctest */,
+				EDC8162A2FB53D6E0045BC85 /* ZakatWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		EDC8160F2FB53CB20045BC85 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				EDC816102FB53CB20045BC85 /* WidgetKit.framework */,
+				EDC816122FB53CB20045BC85 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -102,10 +173,12 @@
 				ED171CA92FB40F7000F5D8E3 /* Sources */,
 				ED171CAA2FB40F7000F5D8E3 /* Frameworks */,
 				ED171CAB2FB40F7000F5D8E3 /* Resources */,
+				EDC816212FB53CB30045BC85 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				EDC816362FB53D6F0045BC85 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				ED171CAF2FB40F7000F5D8E3 /* zakat-al-mal-app */,
@@ -163,6 +236,28 @@
 			productReference = ED171CC62FB40F7100F5D8E3 /* zakat-al-mal-appUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		EDC816292FB53D6E0045BC85 /* ZakatWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EDC816392FB53D6F0045BC85 /* Build configuration list for PBXNativeTarget "ZakatWidgetExtension" */;
+			buildPhases = (
+				EDC816262FB53D6E0045BC85 /* Sources */,
+				EDC816272FB53D6E0045BC85 /* Frameworks */,
+				EDC816282FB53D6E0045BC85 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				EDC8162D2FB53D6E0045BC85 /* ZakatWidget */,
+			);
+			name = ZakatWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = ZakatWidgetExtension;
+			productReference = EDC8162A2FB53D6E0045BC85 /* ZakatWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +279,9 @@
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = ED171CAC2FB40F7000F5D8E3;
 					};
+					EDC816292FB53D6E0045BC85 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 				};
 			};
 			buildConfigurationList = ED171CA82FB40F7000F5D8E3 /* Build configuration list for PBXProject "zakat-al-mal-app" */;
@@ -203,6 +301,7 @@
 				ED171CAC2FB40F7000F5D8E3 /* zakat-al-mal-app */,
 				ED171CBB2FB40F7100F5D8E3 /* zakat-al-mal-appTests */,
 				ED171CC52FB40F7100F5D8E3 /* zakat-al-mal-appUITests */,
+				EDC816292FB53D6E0045BC85 /* ZakatWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +322,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		ED171CC42FB40F7100F5D8E3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDC816282FB53D6E0045BC85 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +359,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EDC816262FB53D6E0045BC85 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +378,11 @@
 			isa = PBXTargetDependency;
 			target = ED171CAC2FB40F7000F5D8E3 /* zakat-al-mal-app */;
 			targetProxy = ED171CC72FB40F7100F5D8E3 /* PBXContainerItemProxy */;
+		};
+		EDC816362FB53D6F0045BC85 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EDC816292FB53D6E0045BC85 /* ZakatWidgetExtension */;
+			targetProxy = EDC816352FB53D6F0045BC85 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -390,9 +508,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "zakat-al-mal-app/zakat-al-mal-app.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = HKJSJ7T8Q5;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -434,9 +553,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "zakat-al-mal-app/zakat-al-mal-app.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = HKJSJ7T8Q5;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -479,7 +599,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = HKJSJ7T8Q5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
@@ -505,7 +625,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = HKJSJ7T8Q5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
@@ -530,7 +650,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = HKJSJ7T8Q5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
@@ -555,7 +675,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = HKJSJ7T8Q5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
@@ -571,6 +691,81 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				TEST_TARGET_NAME = "zakat-al-mal-app";
+				XROS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
+		EDC8163A2FB53D6F0045BC85 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ZakatWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HKJSJ7T8Q5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ZakatWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ZakatWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.yamanshqeirat.zakat-al-mal-app.ZakatWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		EDC8163B2FB53D6F0045BC85 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ZakatWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HKJSJ7T8Q5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ZakatWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ZakatWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.yamanshqeirat.zakat-al-mal-app.ZakatWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				VALIDATE_PRODUCT = YES;
 				XROS_DEPLOYMENT_TARGET = 26.2;
 			};
 			name = Release;
@@ -610,6 +805,15 @@
 			buildConfigurations = (
 				ED171CD72FB40F7100F5D8E3 /* Debug */,
 				ED171CD82FB40F7100F5D8E3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EDC816392FB53D6F0045BC85 /* Build configuration list for PBXNativeTarget "ZakatWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EDC8163A2FB53D6F0045BC85 /* Debug */,
+				EDC8163B2FB53D6F0045BC85 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

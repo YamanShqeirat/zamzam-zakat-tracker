@@ -14,10 +14,3 @@ struct ZakatWidget: Widget {
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
-
-@main
-struct ZakatWidgetBundle: WidgetBundle {
-    var body: some Widget {
-        ZakatWidget()
-    }
-}
