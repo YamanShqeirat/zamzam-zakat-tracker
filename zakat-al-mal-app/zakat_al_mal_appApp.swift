@@ -5,14 +5,20 @@
 //  Created by Yaman Shqeirat on 5/12/26.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct zakat_al_mal_appApp: App {
-    var sharedModelContainer: ModelContainer = {
+    @Environment(\.scenePhase) private var scenePhase
+
+    let sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Asset.self,
+            HawlRecord.self,
+            NisabSnapshot.self,
+            ZakatPayment.self,
+            AppSettings.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -23,10 +29,19 @@ struct zakat_al_mal_appApp: App {
         }
     }()
 
+    init() {
+        BackgroundSyncService.register(modelContainer: sharedModelContainer)
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
         .modelContainer(sharedModelContainer)
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .background {
+                BackgroundSyncService.scheduleNext()
+            }
+        }
     }
 }

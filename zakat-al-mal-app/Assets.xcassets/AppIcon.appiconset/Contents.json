@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "ZamZam_AppIcon_Light.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -12,6 +13,7 @@
           "value" : "dark"
         }
       ],
+      "filename" : "ZamZam_AppIcon_Dark.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -23,6 +25,7 @@
           "value" : "tinted"
         }
       ],
+      "filename" : "ZamZam_AppIcon_Tinted (1).png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
