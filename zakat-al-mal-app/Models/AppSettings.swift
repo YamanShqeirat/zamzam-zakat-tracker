@@ -10,6 +10,7 @@ final class AppSettings {
     var cachedGoldPricePerGram: Decimal?
     var lastSilverPriceRefresh: Date?
     var cachedSilverPricePerGram: Decimal?
+    var lastSimpleFINSync: Date?
     var notificationsEnabled: Bool
     var hawlReminderDaysBefore: Int
 

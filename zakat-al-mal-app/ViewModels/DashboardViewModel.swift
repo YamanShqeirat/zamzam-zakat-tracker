@@ -24,20 +24,26 @@ final class DashboardViewModel {
     var financialService: FinancialDataService?
     var goldPriceService: GoldPriceService?
 
-    func refresh(assets: [Asset], modelContext: ModelContext) async {
+    /// Minimum time between automatic external fetches. Pull-to-refresh and
+    /// the Settings "Refresh prices" button pass `force: true` to bypass it.
+    /// Keeps us well inside the GoldAPI free tier and avoids triggering a
+    /// SimpleFIN "new IP" email on every dashboard appearance.
+    static let autoRefreshInterval: TimeInterval = 12 * 60 * 60
+
+    func refresh(assets: [Asset], modelContext: ModelContext, force: Bool = false) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
 
         // 1. Gold + silver prices (independent — a failure on one doesn't block the rest).
-        let gold = await refreshGoldPrice(modelContext: modelContext)
+        let gold = await refreshGoldPrice(modelContext: modelContext, force: force)
         goldPricePerGram = gold.price
         goldPriceStale = gold.stale
 
-        silverPricePerGram = await refreshSilverPrice(modelContext: modelContext)
+        silverPricePerGram = await refreshSilverPrice(modelContext: modelContext, force: force)
 
         // 2. SimpleFIN sync (independent error path).
-        await refreshSimpleFIN(assets: assets, modelContext: modelContext)
+        await refreshSimpleFIN(assets: assets, modelContext: modelContext, force: force)
 
         // 3. Re-mark gold/silver assets with live spot × weight.
         applyMetalSpotPrices(assets: assets, modelContext: modelContext)
@@ -60,11 +66,18 @@ final class DashboardViewModel {
 
     // MARK: - Section helpers
 
-    private func refreshGoldPrice(modelContext: ModelContext) async -> (price: Decimal, stale: Bool) {
+    private func refreshGoldPrice(modelContext: ModelContext, force: Bool) async -> (price: Decimal, stale: Bool) {
+        let settings = currentSettings(modelContext)
+        if !force,
+           let cached = settings?.cachedGoldPricePerGram, cached > 0,
+           let last = settings?.lastGoldPriceRefresh,
+           Date().timeIntervalSince(last) < Self.autoRefreshInterval {
+            return (cached, false)
+        }
         if let service = goldPriceService {
             do {
                 let price = try await service.fetchGoldPricePerGram()
-                if let settings = currentSettings(modelContext) {
+                if let settings {
                     settings.cachedGoldPricePerGram = price
                     settings.lastGoldPriceRefresh = Date()
                     try? modelContext.save()
@@ -76,16 +89,23 @@ final class DashboardViewModel {
             }
         }
         // Fall back to the persisted cache when no live price is available.
-        if let cached = currentSettings(modelContext)?.cachedGoldPricePerGram, cached > 0 {
+        if let cached = settings?.cachedGoldPricePerGram, cached > 0 {
             return (cached, true)
         }
         return (0, false)
     }
 
-    private func refreshSilverPrice(modelContext: ModelContext) async -> Decimal {
+    private func refreshSilverPrice(modelContext: ModelContext, force: Bool) async -> Decimal {
+        let settings = currentSettings(modelContext)
+        if !force,
+           let cached = settings?.cachedSilverPricePerGram, cached > 0,
+           let last = settings?.lastSilverPriceRefresh,
+           Date().timeIntervalSince(last) < Self.autoRefreshInterval {
+            return cached
+        }
         if let service = goldPriceService {
             if let price = try? await service.fetchSilverPricePerGram() {
-                if let settings = currentSettings(modelContext) {
+                if let settings {
                     settings.cachedSilverPricePerGram = price
                     settings.lastSilverPriceRefresh = Date()
                     try? modelContext.save()
@@ -93,15 +113,27 @@ final class DashboardViewModel {
                 return price
             }
         }
-        return currentSettings(modelContext)?.cachedSilverPricePerGram ?? 0
+        return settings?.cachedSilverPricePerGram ?? 0
     }
 
-    private func refreshSimpleFIN(assets: [Asset], modelContext: ModelContext) async {
+    private func refreshSimpleFIN(assets: [Asset], modelContext: ModelContext, force: Bool) async {
         guard let finService = financialService else { return }
+        let settings = currentSettings(modelContext)
+        if !force,
+           let last = settings?.lastSimpleFINSync,
+           Date().timeIntervalSince(last) < Self.autoRefreshInterval {
+            lastSyncDate = last
+            return
+        }
         do {
             let accounts = try await finService.fetchAccounts()
             updateAssetBalances(assets: assets, from: accounts, context: modelContext)
-            lastSyncDate = Date()
+            let now = Date()
+            lastSyncDate = now
+            if let settings {
+                settings.lastSimpleFINSync = now
+                try? modelContext.save()
+            }
         } catch {
             appendError("Account sync: \(error.localizedDescription)")
         }

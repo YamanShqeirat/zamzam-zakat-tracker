@@ -115,8 +115,8 @@ struct DashboardView: View {
         }
         .toolbarBackground(AppTheme.background, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .task { await reload() }
-        .refreshable { await reload() }
+        .task { await reload(force: false) }
+        .refreshable { await reload(force: true) }
         .sheet(isPresented: $showingPaymentSheet) {
             NavigationStack { PaymentView(hawlRecord: vm.currentHawl) }
         }
@@ -338,7 +338,7 @@ struct DashboardView: View {
         HStack(spacing: 12) {
             actionButton(title: "+ Add asset") { showingAddAsset = true }
             actionButton(title: vm.isLoading ? "Refreshing…" : "Refresh") {
-                Task { await reload() }
+                Task { await reload(force: true) }
             }
             .disabled(vm.isLoading)
         }
@@ -392,7 +392,7 @@ struct DashboardView: View {
 
     // MARK: - Reload
 
-    private func reload() async {
+    private func reload(force: Bool) async {
         if let accessURL = KeychainService.load(key: KeychainKey.simplefinAccessURL) {
             vm.financialService = SimpleFINService(accessURL: accessURL)
         } else {
@@ -404,7 +404,7 @@ struct DashboardView: View {
             vm.goldPriceService = nil
         }
         vm.currentHawl = activeHawl
-        await vm.refresh(assets: assets, modelContext: modelContext)
+        await vm.refresh(assets: assets, modelContext: modelContext, force: force)
     }
 
     private func shortHijri(_ date: Date) -> String {

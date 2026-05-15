@@ -229,5 +229,8 @@ enum BackgroundSyncService {
                 asset.lastSyncedAt = match.balanceDate
             }
         }
+        if let settings = try? context.fetch(FetchDescriptor<AppSettings>()).first {
+            settings.lastSimpleFINSync = Date()
+        }
     }
 }
