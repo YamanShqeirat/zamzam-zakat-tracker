@@ -14,7 +14,14 @@ struct ZakatWidgetEntry: TimelineEntry {
             estimatedZakat: 1195.80,
             isAboveNisab: true,
             lastUpdated: Date(),
-            hasData: true
+            hasData: true,
+            breakdown: [
+                .init(category: "brokerage",   amount: 21500),
+                .init(category: "bankAccount", amount: 12800),
+                .init(category: "gold",        amount: 7400),
+                .init(category: "cash",        amount: 3132),
+                .init(category: "crypto",      amount: 3000)
+            ]
         )
     )
 

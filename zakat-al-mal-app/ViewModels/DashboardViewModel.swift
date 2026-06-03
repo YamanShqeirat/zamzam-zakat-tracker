@@ -60,7 +60,7 @@ final class DashboardViewModel {
 
         // 6. Hijri label, widget snapshot, hawl-reminder schedule.
         hijriDateString = engine.hawlTracker.hijriDateString(for: Date())
-        publishWidgetSnapshot()
+        publishWidgetSnapshot(assets: assets)
         scheduleHawlReminderIfNeeded(modelContext: modelContext)
     }
 
@@ -202,7 +202,7 @@ final class DashboardViewModel {
         }
     }
 
-    private func publishWidgetSnapshot() {
+    private func publishWidgetSnapshot(assets: [Asset]) {
         SharedAppGroup.write(.init(
             totalZakatableWealth: totalZakatableWealth,
             currentNisab: currentNisab,
@@ -212,9 +212,23 @@ final class DashboardViewModel {
                 : totalZakatableWealth * ZakatEngine.zakatRate,
             isAboveNisab: isAboveNisab,
             lastUpdated: Date(),
-            hasData: true
+            hasData: true,
+            breakdown: Self.breakdown(from: assets)
         ))
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    static func breakdown(from assets: [Asset]) -> [SharedAppGroup.CategorySlice] {
+        let grouped = Dictionary(grouping: assets.filter(\.isActive), by: \.category)
+        return grouped
+            .map { category, items in
+                SharedAppGroup.CategorySlice(
+                    category: category.rawValue,
+                    amount: items.reduce(Decimal.zero) { $0 + $1.zakatableAmount }
+                )
+            }
+            .filter { $0.amount > 0 }
+            .sorted { $0.amount > $1.amount }
     }
 
     private func scheduleHawlReminderIfNeeded(modelContext: ModelContext) {

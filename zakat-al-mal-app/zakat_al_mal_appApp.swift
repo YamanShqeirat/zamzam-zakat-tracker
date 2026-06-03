@@ -39,8 +39,17 @@ struct zakat_al_mal_appApp: App {
         }
         .modelContainer(sharedModelContainer)
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .background {
+            switch newPhase {
+            case .active:
+                Task {
+                    await BackgroundSyncService.performForegroundSyncIfNeeded(
+                        modelContainer: sharedModelContainer
+                    )
+                }
+            case .background:
                 BackgroundSyncService.scheduleNext()
+            default:
+                break
             }
         }
     }

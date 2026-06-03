@@ -40,6 +40,25 @@ enum BackgroundSyncService {
         try? BGTaskScheduler.shared.submit(request)
     }
 
+    /// Minimum elapsed time before a foreground launch triggers another full
+    /// sync. Background refresh is opportunistic and may skip days, so syncing
+    /// when the app is opened is the reliable path to fresh balances.
+    static let foregroundSyncThrottle: TimeInterval = 20 * 60 * 60
+
+    /// Runs a full daily sync when the app comes to the foreground, but only if
+    /// it hasn't synced within `foregroundSyncThrottle`. Cheap to call on every
+    /// `.active` transition — it no-ops when a recent sync already happened.
+    @MainActor
+    static func performForegroundSyncIfNeeded(modelContainer: ModelContainer) async {
+        let context = ModelContext(modelContainer)
+        let settings = try? context.fetch(FetchDescriptor<AppSettings>()).first
+        if let last = settings?.lastSimpleFINSync,
+           Date().timeIntervalSince(last) < foregroundSyncThrottle {
+            return
+        }
+        await performDailySync(modelContainer: modelContainer)
+    }
+
     // MARK: - Handler
 
     private static func handle(task: BGAppRefreshTask, modelContainer: ModelContainer) {
@@ -167,7 +186,8 @@ enum BackgroundSyncService {
             estimatedZakat: zakatDue > 0 ? zakatDue : totalWealth * ZakatEngine.zakatRate,
             isAboveNisab: isAbove,
             lastUpdated: Date(),
-            hasData: true
+            hasData: true,
+            breakdown: DashboardViewModel.breakdown(from: assets)
         ))
         WidgetCenter.shared.reloadAllTimelines()
     }

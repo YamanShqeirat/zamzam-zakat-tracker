@@ -19,6 +19,12 @@ enum SharedAppGroup {
         static let isAboveNisab         = "isAboveNisab"
         static let hasData              = "hasData"
         static let lastUpdated          = "lastUpdated"
+        static let breakdown            = "categoryBreakdown"
+    }
+
+    struct CategorySlice: Codable, Hashable {
+        var category: String
+        var amount: Decimal
     }
 
     struct Snapshot {
@@ -29,6 +35,7 @@ enum SharedAppGroup {
         var isAboveNisab: Bool = false
         var lastUpdated: Date? = nil
         var hasData: Bool = false
+        var breakdown: [CategorySlice] = []
     }
 
     static func write(_ snapshot: Snapshot) {
@@ -40,12 +47,22 @@ enum SharedAppGroup {
         defaults.set(snapshot.isAboveNisab,                                   forKey: Key.isAboveNisab)
         defaults.set(snapshot.lastUpdated ?? Date(),                          forKey: Key.lastUpdated)
         defaults.set(true,                                                    forKey: Key.hasData)
+        if let data = try? JSONEncoder().encode(snapshot.breakdown) {
+            defaults.set(data, forKey: Key.breakdown)
+        }
     }
 
     static func read() -> Snapshot {
         guard let defaults, defaults.bool(forKey: Key.hasData) else {
             return Snapshot()
         }
+        let breakdown: [CategorySlice] = {
+            guard let data = defaults.data(forKey: Key.breakdown),
+                  let slices = try? JSONDecoder().decode([CategorySlice].self, from: data) else {
+                return []
+            }
+            return slices
+        }()
         return Snapshot(
             totalZakatableWealth: (defaults.object(forKey: Key.totalZakatableWealth) as? NSDecimalNumber)?.decimalValue ?? 0,
             currentNisab:         (defaults.object(forKey: Key.currentNisab)         as? NSDecimalNumber)?.decimalValue ?? 0,
@@ -53,7 +70,8 @@ enum SharedAppGroup {
             estimatedZakat:       (defaults.object(forKey: Key.estimatedZakat)       as? NSDecimalNumber)?.decimalValue ?? 0,
             isAboveNisab:         defaults.bool(forKey: Key.isAboveNisab),
             lastUpdated:          defaults.object(forKey: Key.lastUpdated) as? Date,
-            hasData:              true
+            hasData:              true,
+            breakdown:            breakdown
         )
     }
 }
