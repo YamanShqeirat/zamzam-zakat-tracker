@@ -13,23 +13,34 @@ struct ContentView: View {
     @Query private var settingsList: [AppSettings]
 
     var body: some View {
-        NavigationStack {
-            DashboardView()
-        }
-        .tint(AppTheme.accent)
-        .preferredColorScheme(.dark)
-        .task {
-            if settingsList.isEmpty {
-                modelContext.insert(AppSettings())
-                try? modelContext.save()
+        RootTabView()
+            .tint(AppTheme.accent)
+            .preferredColorScheme(.dark)
+            .task {
+                if settingsList.isEmpty {
+                    modelContext.insert(AppSettings())
+                    try? modelContext.save()
+                }
+                DefaultBudgetCategories.seedIfNeeded(context: modelContext)
+                await NotificationService.requestAuthorization()
+                BackgroundSyncService.scheduleNext()
+                armMonthlyExpenseReminder()
             }
-            await NotificationService.requestAuthorization()
-            BackgroundSyncService.scheduleNext()
+    }
+
+    /// (Re)schedule the end-of-month "review your expenses" reminder on launch.
+    private func armMonthlyExpenseReminder() {
+        let settings = settingsList.first
+        guard settings?.notificationsEnabled ?? true,
+              settings?.monthlyExpenseReminderEnabled ?? true else {
+            NotificationService.cancel(identifier: NotificationService.Identifier.monthlyExpenseReview)
+            return
         }
+        NotificationService.scheduleMonthlyExpenseReview(hour: settings?.monthlyExpenseReminderHour ?? 20)
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Asset.self, HawlRecord.self, NisabSnapshot.self, ZakatPayment.self, AppSettings.self], inMemory: true)
+        .modelContainer(for: [Asset.self, HawlRecord.self, NisabSnapshot.self, ZakatPayment.self, AppSettings.self, BudgetCategory.self, BudgetEntry.self, FinanceTransaction.self, AccountBalanceSnapshot.self], inMemory: true)
 }

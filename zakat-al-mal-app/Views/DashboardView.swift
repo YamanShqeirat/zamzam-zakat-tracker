@@ -9,7 +9,6 @@ struct DashboardView: View {
     @State private var vm = DashboardViewModel()
     @State private var showingPaymentSheet = false
     @State private var showingAddAsset = false
-    @State private var selectedAsset: Asset?
 
     private let hawlTracker = HawlTracker()
     private let addAssetVM = AssetViewModel()
@@ -41,16 +40,6 @@ struct DashboardView: View {
     private var amountBelowThreshold: Decimal {
         max(0, vm.currentNisab - vm.totalZakatableWealth)
     }
-    private var assetBreakdown: [(category: AssetCategory, total: Decimal)] {
-        Dictionary(grouping: assets.filter(\.isActive), by: \.category)
-            .map { (category: $0.key, total: $0.value.reduce(Decimal.zero) { $0 + $1.zakatableAmount }) }
-            .filter { $0.total > 0 }
-            .sorted { $0.total > $1.total }
-    }
-    private var breakdownMax: Decimal {
-        assetBreakdown.first?.total ?? 0
-    }
-
     // MARK: - Body
 
     var body: some View {
@@ -81,10 +70,6 @@ struct DashboardView: View {
                     progressToNisabSection
                 }
 
-                if !assetBreakdown.isEmpty {
-                    assetBreakdownSection
-                }
-
                 bottomButtons
 
                 disclaimer
@@ -92,23 +77,15 @@ struct DashboardView: View {
             .padding(16)
         }
         .scrollContentBackground(.hidden)
-        .background(AppTheme.background.ignoresSafeArea())
+        .background(AppBackground().ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Zakat tracker")
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     AnalyticsView()
                 } label: {
-                    Image(systemName: "chart.pie")
-                        .foregroundStyle(AppTheme.textSecondary)
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    SettingsView()
-                } label: {
-                    Image(systemName: "gearshape")
+                    Image(systemName: "chart.xyaxis.line")
                         .foregroundStyle(AppTheme.textSecondary)
                 }
             }
@@ -122,9 +99,6 @@ struct DashboardView: View {
         }
         .sheet(isPresented: $showingAddAsset) {
             NavigationStack { AddAssetView(vm: addAssetVM) }
-        }
-        .sheet(item: $selectedAsset) { asset in
-            NavigationStack { AssetDetailView(asset: asset, vm: addAssetVM) }
         }
     }
 
@@ -258,44 +232,6 @@ struct DashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.card, in: .rect(cornerRadius: 12))
-    }
-
-    // MARK: - Asset breakdown
-
-    private var assetBreakdownSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("ASSET BREAKDOWN")
-                    .font(.caption2.bold())
-                    .tracking(0.8)
-                    .foregroundStyle(AppTheme.textSecondary)
-                Spacer()
-                NavigationLink {
-                    AssetListView()
-                } label: {
-                    Text("Manage")
-                        .font(.caption.bold())
-                        .foregroundStyle(AppTheme.accent)
-                }
-            }
-            VStack(spacing: 8) {
-                ForEach(assetBreakdown, id: \.category) { entry in
-                    AssetBreakdownRow(
-                        category: entry.category,
-                        amount: entry.total,
-                        max: breakdownMax
-                    )
-                    .onTapGesture {
-                        if let asset = assets.filter({ $0.isActive && $0.category == entry.category }).first {
-                            selectedAsset = asset
-                        }
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
         .background(AppTheme.card, in: .rect(cornerRadius: 12))
     }
 
@@ -439,48 +375,10 @@ private struct StatCard: View {
     }
 }
 
-// MARK: - AssetBreakdownRow
-
-private struct AssetBreakdownRow: View {
-    let category: AssetCategory
-    let amount: Decimal
-    let max: Decimal
-
-    private var ratio: Double {
-        guard max > 0 else { return 0 }
-        return Swift.min(1, (amount as NSDecimalNumber).doubleValue / (max as NSDecimalNumber).doubleValue)
-    }
-
-    var body: some View {
-        VStack(spacing: 6) {
-            HStack {
-                Text(category.displayName)
-                    .font(.subheadline)
-                    .foregroundStyle(AppTheme.textPrimary)
-                Spacer()
-                CurrencyText(amount: amount)
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(AppTheme.textPrimary)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(AppTheme.ringTrack)
-                        .frame(height: 3)
-                    Capsule()
-                        .fill(category.swatch)
-                        .frame(width: geo.size.width * ratio, height: 3)
-                }
-            }
-            .frame(height: 3)
-        }
-    }
-}
-
 #Preview {
     NavigationStack {
         DashboardView()
     }
-    .modelContainer(for: [Asset.self, HawlRecord.self, NisabSnapshot.self, ZakatPayment.self, AppSettings.self], inMemory: true)
+    .modelContainer(for: [Asset.self, HawlRecord.self, NisabSnapshot.self, ZakatPayment.self, AppSettings.self, BudgetCategory.self, BudgetEntry.self, FinanceTransaction.self, AccountBalanceSnapshot.self], inMemory: true)
     .preferredColorScheme(.dark)
 }

@@ -8,6 +8,10 @@ struct SettingsView: View {
     @Query private var hawls: [HawlRecord]
     @Query private var payments: [ZakatPayment]
     @Query private var snapshots: [NisabSnapshot]
+    @Query private var budgetCategories: [BudgetCategory]
+    @Query private var budgetEntries: [BudgetEntry]
+    @Query private var financeTransactions: [FinanceTransaction]
+    @Query private var accountSnapshots: [AccountBalanceSnapshot]
 
     @State private var showSimpleFINSetup = false
     @State private var showGoldKeySheet = false
@@ -15,6 +19,8 @@ struct SettingsView: View {
     @State private var goldRefreshing = false
     @State private var goldError: String?
     @State private var showResetConfirm = false
+    @State private var exportURL: URL?
+    @State private var showShareSheet = false
 
     private var settings: AppSettings? { settingsList.first }
     private var simpleFINConnected: Bool {
@@ -65,6 +71,11 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This removes all assets, hawl records, payments, and snapshots. Stored credentials are also cleared. This cannot be undone.")
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let exportURL {
+                ShareSheet(items: [exportURL])
+            }
         }
     }
 
@@ -159,7 +170,25 @@ struct SettingsView: View {
                     ),
                     in: 1...30
                 )
+                Toggle("End-of-month expense review", isOn: Binding(
+                    get: { settings.monthlyExpenseReminderEnabled },
+                    set: {
+                        settings.monthlyExpenseReminderEnabled = $0
+                        try? modelContext.save()
+                        updateMonthlyReminder()
+                    }
+                ))
             }
+        }
+    }
+
+    /// Arm or cancel the end-of-month reminder to match the current toggles.
+    private func updateMonthlyReminder() {
+        guard let settings else { return }
+        if settings.notificationsEnabled && settings.monthlyExpenseReminderEnabled {
+            NotificationService.scheduleMonthlyExpenseReview(hour: settings.monthlyExpenseReminderHour)
+        } else {
+            NotificationService.cancel(identifier: NotificationService.Identifier.monthlyExpenseReview)
         }
     }
 
@@ -178,10 +207,29 @@ struct SettingsView: View {
 
     private var dataSection: some View {
         Section("Data") {
+            Button {
+                exportCSV()
+            } label: {
+                Label("Export to CSV", systemImage: "square.and.arrow.up")
+            }
             Button("Reset all data", role: .destructive) {
                 showResetConfirm = true
             }
         }
+    }
+
+    private func exportCSV() {
+        let year = Calendar.current.component(.year, from: Date())
+        guard let url = CSVExporter.export(
+            year: year,
+            categories: budgetCategories,
+            entries: budgetEntries,
+            transactions: financeTransactions,
+            assets: assets,
+            accountSnapshots: accountSnapshots
+        ) else { return }
+        exportURL = url
+        showShareSheet = true
     }
 
     // MARK: - Actions
@@ -218,6 +266,9 @@ struct SettingsView: View {
         for h in hawls { modelContext.delete(h) }
         for p in payments { modelContext.delete(p) }
         for s in snapshots { modelContext.delete(s) }
+        for e in budgetEntries { modelContext.delete(e) }
+        for t in financeTransactions { modelContext.delete(t) }
+        for a in accountSnapshots { modelContext.delete(a) }
         KeychainService.delete(key: KeychainKey.simplefinAccessURL)
         KeychainService.delete(key: KeychainKey.goldAPIKey)
         if let s = settings {
@@ -274,5 +325,5 @@ private struct GoldAPIKeyEntryView: View {
 
 #Preview {
     NavigationStack { SettingsView() }
-        .modelContainer(for: [Asset.self, HawlRecord.self, NisabSnapshot.self, ZakatPayment.self, AppSettings.self], inMemory: true)
+        .modelContainer(for: [Asset.self, HawlRecord.self, NisabSnapshot.self, ZakatPayment.self, AppSettings.self, BudgetCategory.self, BudgetEntry.self, FinanceTransaction.self, AccountBalanceSnapshot.self], inMemory: true)
 }

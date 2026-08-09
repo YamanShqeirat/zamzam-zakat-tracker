@@ -76,7 +76,6 @@ struct AnalyticsView: View {
         ScrollView {
             VStack(spacing: 18) {
                 insightsStrip
-                distributionCard
                 wealthOverTimeCard
                 lunarCard
                 givingCard
@@ -85,7 +84,7 @@ struct AnalyticsView: View {
             .padding(16)
         }
         .scrollContentBackground(.hidden)
-        .background(AppTheme.background.ignoresSafeArea())
+        .background(AppBackground().ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Analytics")
         .toolbarBackground(AppTheme.background, for: .navigationBar)
@@ -116,85 +115,6 @@ struct AnalyticsView: View {
         }
     }
 
-    // MARK: - Distribution (donut)
-
-    private var distributionCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(
-                title: "WEALTH DISTRIBUTION",
-                infoTitle: "Wealth distribution",
-                infoText: "A donut view of how your zakatable wealth is split across asset categories.",
-                infoCalc: "Each slice is one category's total zakatable amount divided by your overall zakatable wealth. Retirement balances are reduced by your configured early-withdrawal penalty before being summed."
-            )
-
-            if distribution.isEmpty {
-                emptyState(symbol: "chart.pie",
-                           text: "Add an asset to see how your wealth is distributed.")
-            } else {
-                HStack(alignment: .center, spacing: 16) {
-                    donut
-                        .frame(width: 140, height: 140)
-                    legend
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(AppTheme.card, in: .rect(cornerRadius: 14))
-    }
-
-    private var donut: some View {
-        Chart(distribution) { entry in
-            SectorMark(
-                angle: .value("Amount", entry.amount.asDouble),
-                innerRadius: .ratio(0.62),
-                angularInset: 1.5
-            )
-            .cornerRadius(3)
-            .foregroundStyle(entry.category.swatch)
-        }
-        .chartLegend(.hidden)
-        .overlay {
-            VStack(spacing: 2) {
-                Text("Total")
-                    .font(.caption2)
-                    .foregroundStyle(AppTheme.textSecondary)
-                CurrencyText(amount: totalWealth)
-                    .font(.subheadline.bold().monospacedDigit())
-                    .foregroundStyle(AppTheme.textPrimary)
-                    .minimumScaleFactor(0.6)
-                    .lineLimit(1)
-                    .padding(.horizontal, 4)
-            }
-        }
-    }
-
-    private var legend: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(distribution) { entry in
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(entry.category.swatch)
-                        .frame(width: 8, height: 8)
-                    Text(entry.category.displayName)
-                        .font(.caption)
-                        .foregroundStyle(AppTheme.textPrimary)
-                    Spacer(minLength: 4)
-                    Text(percentText(for: entry))
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(AppTheme.textSecondary)
-                }
-            }
-        }
-    }
-
-    private func percentText(for entry: BreakdownEntry) -> String {
-        guard totalWealth > 0 else { return "—" }
-        let ratio = (entry.amount / totalWealth) as NSDecimalNumber
-        return "\(Int((ratio.doubleValue * 100).rounded()))%"
-    }
-
     // MARK: - Wealth over time (line)
 
     private var wealthOverTimeCard: some View {
@@ -210,94 +130,14 @@ struct AnalyticsView: View {
                 emptyState(symbol: "chart.xyaxis.line",
                            text: "Your wealth trajectory will appear here as daily snapshots accumulate.")
             } else {
-                Chart {
-                    ForEach(wealthSeries) { p in
-                        LineMark(
-                            x: .value("Date", p.date),
-                            y: .value("Wealth", p.wealth)
-                        )
-                        .foregroundStyle(by: .value("Series", "Wealth"))
-                        .interpolationMethod(.monotone)
-                    }
-                    ForEach(wealthSeries) { p in
-                        AreaMark(
-                            x: .value("Date", p.date),
-                            y: .value("Wealth", p.wealth)
-                        )
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [AppTheme.accent.opacity(0.35), AppTheme.accent.opacity(0)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .interpolationMethod(.monotone)
-                    }
-                    ForEach(wealthSeries) { p in
-                        LineMark(
-                            x: .value("Date", p.date),
-                            y: .value("Nisab", p.nisab)
-                        )
-                        .foregroundStyle(by: .value("Series", "Nisab"))
-                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
-                    }
-                }
-                .chartForegroundStyleScale([
-                    "Wealth": AppTheme.accent,
-                    "Nisab": Color(hex: 0xEF4444),
-                ])
-                .chartLegend(position: .bottom, spacing: 8) {
-                    HStack(spacing: 14) {
-                        legendDot(color: AppTheme.accent, label: "Zakatable wealth")
-                        legendDot(color: Color(hex: 0xEF4444), label: "Nisab", dashed: true)
-                    }
-                    .font(.caption2)
-                    .foregroundStyle(AppTheme.textSecondary)
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading) { value in
-                        AxisGridLine().foregroundStyle(AppTheme.divider)
-                        AxisValueLabel {
-                            if let v = value.as(Double.self) {
-                                Text(compactCurrency(v))
-                                    .font(.caption2)
-                                    .foregroundStyle(AppTheme.textTertiary)
-                            }
-                        }
-                    }
-                }
-                .chartXAxis {
-                    AxisMarks(values: .automatic(desiredCount: 4)) { value in
-                        AxisGridLine().foregroundStyle(AppTheme.divider)
-                        AxisValueLabel(format: .dateTime.month(.abbreviated).day())
-                            .font(.caption2)
-                            .foregroundStyle(AppTheme.textTertiary)
-                    }
-                }
-                .frame(height: 200)
+                WealthTrendChart(points: wealthSeries.map {
+                    WealthTrendPoint(date: $0.date, wealth: $0.wealth, nisab: $0.nisab)
+                })
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(AppTheme.card, in: .rect(cornerRadius: 14))
-    }
-
-    private func legendDot(color: Color, label: String, dashed: Bool = false) -> some View {
-        HStack(spacing: 6) {
-            if dashed {
-                Rectangle()
-                    .fill(color)
-                    .frame(width: 14, height: 1.5)
-                    .overlay(
-                        Rectangle()
-                            .fill(AppTheme.card)
-                            .frame(width: 4, height: 1.5)
-                    )
-            } else {
-                Circle().fill(color).frame(width: 7, height: 7)
-            }
-            Text(label)
-        }
     }
 
     // MARK: - Lunar calendar infographic
@@ -434,18 +274,6 @@ struct AnalyticsView: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 8)
-    }
-
-    private func compactCurrency(_ value: Double) -> String {
-        let abs = Swift.abs(value)
-        let sign = value < 0 ? "-" : ""
-        if abs >= 1_000_000 {
-            return "\(sign)$\((value / 1_000_000).formatted(.number.precision(.fractionLength(0...1))))M"
-        }
-        if abs >= 1_000 {
-            return "\(sign)$\((value / 1_000).formatted(.number.precision(.fractionLength(0...1))))k"
-        }
-        return value.formatted(.currency(code: "USD").precision(.fractionLength(0)))
     }
 
     // MARK: - Hijri helpers
@@ -715,19 +543,8 @@ private struct GivingBucket: Identifiable {
     let amount: Decimal
 }
 
-// MARK: - Decimal helpers (file-local)
-
-private extension Decimal {
-    var asDouble: Double { (self as NSDecimalNumber).doubleValue }
-    var currencyString: String { self.formatted(.currency(code: "USD")) }
-    var signedCurrencyString: String {
-        let prefix = self >= 0 ? "+" : ""
-        return prefix + self.formatted(.currency(code: "USD"))
-    }
-}
-
 #Preview {
     NavigationStack { AnalyticsView() }
-        .modelContainer(for: [Asset.self, HawlRecord.self, NisabSnapshot.self, ZakatPayment.self, AppSettings.self], inMemory: true)
+        .modelContainer(for: [Asset.self, HawlRecord.self, NisabSnapshot.self, ZakatPayment.self, AppSettings.self, BudgetCategory.self, BudgetEntry.self, FinanceTransaction.self, AccountBalanceSnapshot.self], inMemory: true)
         .preferredColorScheme(.dark)
 }

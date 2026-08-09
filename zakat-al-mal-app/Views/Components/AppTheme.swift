@@ -1,24 +1,27 @@
 import SwiftUI
 
-/// Color palette drawn from the pitch wireframes — dark navy app surface,
-/// slightly lighter card fills, teal accent, amber for below-nisab warnings.
+/// Color palette — black surface with a faint gray Islamic geometric pattern,
+/// metallic gold accent, red-orange for below-nisab warnings.
 enum AppTheme {
-    static let background     = Color(hex: 0x1A1F2E)
-    static let card           = Color(hex: 0x232A3B)
-    static let cardElevated   = Color(hex: 0x2A3247)
-    static let divider        = Color.white.opacity(0.06)
+    static let background     = Color(hex: 0x000000)
+    static let card           = Color(hex: 0x16171A)
+    static let cardElevated   = Color(hex: 0x232428)
+    static let divider        = Color.white.opacity(0.08)
 
-    static let accent         = Color(hex: 0x2DD4A8)
-    static let accentSoft     = Color(hex: 0x2DD4A8).opacity(0.15)
-    static let accentMuted    = Color(hex: 0x1F6B56)
+    static let accent         = Color(hex: 0xD4AF37)  // metallic gold
+    static let accentSoft     = Color(hex: 0xD4AF37).opacity(0.15)
+    static let accentMuted    = Color(hex: 0x8C6D1F)  // deep gold
 
-    static let warning        = Color(hex: 0xF59E0B)
-    static let warningSoft    = Color(hex: 0xF59E0B).opacity(0.18)
+    static let warning        = Color(hex: 0xE0533D)  // red-orange
+    static let warningSoft    = Color(hex: 0xE0533D).opacity(0.18)
 
     static let textPrimary    = Color.white
     static let textSecondary  = Color.white.opacity(0.65)
     static let textTertiary   = Color.white.opacity(0.4)
     static let ringTrack      = Color.white.opacity(0.08)
+
+    /// Faint gray used for the background geometric pattern strokes.
+    static let pattern        = Color.white.opacity(0.1)
 }
 
 extension Color {

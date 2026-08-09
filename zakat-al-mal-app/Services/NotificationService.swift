@@ -8,10 +8,11 @@ import UserNotifications
 /// rather than stacking duplicates.
 enum NotificationService {
     enum Identifier {
-        static let hawlReminder = "zakat.hawl-reminder"
-        static let zakatDue     = "zakat.zakat-due"
-        static let syncFailure  = "zakat.sync-failure"
-        static let hawlReset    = "zakat.hawl-reset"
+        static let hawlReminder         = "zakat.hawl-reminder"
+        static let zakatDue             = "zakat.zakat-due"
+        static let syncFailure          = "zakat.sync-failure"
+        static let hawlReset            = "zakat.hawl-reset"
+        static let monthlyExpenseReview = "zakat.monthly-expense-review"
     }
 
     @discardableResult
@@ -63,6 +64,39 @@ enum NotificationService {
         content.body = "Your zakatable wealth has dropped below the nisab threshold. Your hawl has been reset and will restart when your wealth reaches nisab again."
         content.sound = .default
         fireSoon(content: content, identifier: Identifier.hawlReset)
+    }
+
+    /// Schedule the end-of-month "review your expenses" reminder for the last
+    /// day of the current month at `hour`. If that moment has already passed,
+    /// target next month instead. Non-repeating under a stable id, so re-arming
+    /// on launch / daily sync keeps it perpetually one month ahead.
+    static func scheduleMonthlyExpenseReview(hour: Int) {
+        guard let fireDate = nextMonthEndReviewDate(hour: hour) else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Time to review your expenses"
+        content.body = "The month is wrapping up — take a minute to review this month's income and spending."
+        content.sound = .default
+        schedule(content: content, fireDate: fireDate, identifier: Identifier.monthlyExpenseReview)
+    }
+
+    /// Last day of the current month at `hour`; rolls to next month's last day
+    /// once the current one is in the past.
+    static func nextMonthEndReviewDate(hour: Int, now: Date = Date()) -> Date? {
+        let cal = Calendar.current
+        func lastDay(monthsFromNow: Int) -> Date? {
+            guard let monthStart = cal.date(byAdding: .month, value: monthsFromNow,
+                                            to: cal.date(from: cal.dateComponents([.year, .month], from: now))!),
+                  let range = cal.range(of: .day, in: .month, for: monthStart) else { return nil }
+            var comps = cal.dateComponents([.year, .month], from: monthStart)
+            comps.day = range.count
+            comps.hour = max(0, min(23, hour))
+            comps.minute = 0
+            return cal.date(from: comps)
+        }
+        if let thisMonth = lastDay(monthsFromNow: 0), thisMonth > now {
+            return thisMonth
+        }
+        return lastDay(monthsFromNow: 1)
     }
 
     static func cancel(identifier: String) {

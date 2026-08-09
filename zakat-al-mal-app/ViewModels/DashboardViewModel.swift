@@ -48,6 +48,9 @@ final class DashboardViewModel {
         // 3. Re-mark gold/silver assets with live spot × weight.
         applyMetalSpotPrices(assets: assets, modelContext: modelContext)
 
+        // 3b. Record this month's account balances for the deltas chart.
+        AccountHistoryStore.upsertCurrentMonth(assets: assets, context: modelContext)
+
         // 4. Recompute totals + nisab.
         totalZakatableWealth = engine.totalZakatableWealth(assets: assets)
         currentNisab = engine.nisabMonitor.nisabThreshold(goldPricePerGram: goldPricePerGram)

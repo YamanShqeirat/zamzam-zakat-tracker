@@ -12,11 +12,13 @@ final class AssetViewModel {
         category: AssetCategory,
         balance: Decimal,
         weightInGrams: Decimal? = nil,
+        weightUnit: WeightUnit = .grams,
         notes: String? = nil,
         context: ModelContext
     ) {
         let asset = Asset(name: name, category: category, source: .manual, currentBalance: balance)
         asset.weightInGrams = weightInGrams
+        asset.weightUnit = weightUnit
         asset.notes = notes
         context.insert(asset)
         try? context.save()
@@ -32,11 +34,13 @@ final class AssetViewModel {
         asset: Asset,
         weightInGrams: Decimal,
         spotPricePerGram: Decimal,
+        weightUnit: WeightUnit? = nil,
         context: ModelContext
     ) {
         guard asset.source == .manual,
               asset.category == .gold || asset.category == .silver else { return }
         asset.weightInGrams = weightInGrams
+        if let weightUnit { asset.weightUnit = weightUnit }
         if spotPricePerGram > 0 {
             asset.currentBalance = weightInGrams * spotPricePerGram
         }
@@ -71,9 +75,17 @@ final class AssetViewModel {
 
     private func categorize(_ account: SimpleFINAccount) -> AssetCategory {
         let name = account.name.lowercased()
-        if name.contains("checking") || name.contains("savings") { return .bankAccount }
-        if name.contains("ira") || name.contains("401k") || name.contains("roth") { return .retirement }
-        if name.contains("brokerage") || name.contains("individual") { return .brokerage }
-        return .brokerage
+        if name.contains("checking") || name.contains("savings")
+            || name.contains("chequing") || name.contains("deposit") { return .bankAccount }
+        if name.contains("ira") || name.contains("401k") || name.contains("roth")
+            || name.contains("retirement") || name.contains("pension") { return .retirement }
+        if name.contains("espp") { return .espp }
+        if name.contains("crypto") || name.contains("coinbase") || name.contains("bitcoin") { return .crypto }
+        if name.contains("brokerage") || name.contains("individual")
+            || name.contains("invest") || name.contains("stock") { return .brokerage }
+        if name.contains("cash") || name.contains("money market") { return .cash }
+        // Unknown: default to a neutral category rather than assuming stocks —
+        // the user can correct it in the asset's detail screen.
+        return .other
     }
 }

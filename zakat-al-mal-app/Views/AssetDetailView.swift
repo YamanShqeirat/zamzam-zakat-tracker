@@ -11,13 +11,15 @@ struct AssetDetailView: View {
 
     @State private var editedBalance: Decimal
     @State private var editedWeight: Decimal
+    @State private var editedUnit: WeightUnit
     @State private var showDeleteConfirm = false
 
     init(asset: Asset, vm: AssetViewModel) {
         self.asset = asset
         self.vm = vm
         self._editedBalance = State(initialValue: asset.currentBalance)
-        self._editedWeight = State(initialValue: asset.weightInGrams ?? 0)
+        self._editedUnit = State(initialValue: asset.weightUnit)
+        self._editedWeight = State(initialValue: asset.weightInPreferredUnit ?? 0)
     }
 
     private var settings: AppSettings? { settingsList.first }
@@ -29,25 +31,52 @@ struct AssetDetailView: View {
         default:      return 0
         }
     }
+    private var spotPricePerUnit: Decimal { spotPrice * editedUnit.gramsPerUnit }
+    /// Edited weight (in the chosen unit) converted to canonical grams.
+    private var editedWeightInGrams: Decimal { editedWeight * editedUnit.gramsPerUnit }
 
     var body: some View {
         Form {
             Section("Asset") {
                 LabeledContent("Name", value: asset.name)
-                LabeledContent("Category", value: asset.category.displayName)
+                Picker("Category", selection: Binding(
+                    get: { asset.category },
+                    set: { asset.category = $0; try? modelContext.save() }
+                )) {
+                    ForEach(AssetCategory.allCases, id: \.self) { cat in
+                        Label(cat.displayName, systemImage: cat.sfSymbol).tag(cat)
+                    }
+                }
                 LabeledContent("Source", value: asset.source.displayName)
+            }
+
+            if asset.source == .simplefin {
+                Section {
+                    Text("This account is linked via SimpleFIN. Syncs update its balance but keep the category you choose here — so if it was auto-detected wrong (e.g. a savings account read as stocks), set it correctly above.")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.textSecondary)
+                }
+                .listRowBackground(AppTheme.card)
             }
 
             if isMetal && asset.source == .manual {
                 Section("Weight") {
-                    TextField("Grams", value: $editedWeight, format: .number)
+                    Picker("Unit", selection: $editedUnit) {
+                        ForEach(WeightUnit.allCases) { Text($0.displayName).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: editedUnit) { old, new in
+                        // Keep the physical amount fixed when switching units.
+                        if old != new { editedWeight = editedWeight * old.gramsPerUnit / new.gramsPerUnit }
+                    }
+                    TextField("Weight (\(editedUnit.abbrev))", value: $editedWeight, format: .number)
                         .keyboardType(.decimalPad)
                     if spotPrice > 0 {
                         LabeledContent("Spot price") {
-                            Text("\(spotPrice.formatted(.currency(code: "USD")))/g")
+                            Text("\(spotPricePerUnit.formatted(.currency(code: "USD")))/\(editedUnit.abbrev)")
                         }
                         LabeledContent("Market value") {
-                            CurrencyText(amount: editedWeight * spotPrice).bold()
+                            CurrencyText(amount: editedWeightInGrams * spotPrice).bold()
                         }
                     } else {
                         Text("No live \(asset.category.displayName.lowercased()) price — refresh in Settings.")
@@ -137,8 +166,9 @@ struct AssetDetailView: View {
         if isMetal && editedWeight > 0 && spotPrice > 0 {
             vm.updateMetalWeight(
                 asset: asset,
-                weightInGrams: editedWeight,
+                weightInGrams: editedWeightInGrams,
                 spotPricePerGram: spotPrice,
+                weightUnit: editedUnit,
                 context: modelContext
             )
         } else if editedBalance != asset.currentBalance {

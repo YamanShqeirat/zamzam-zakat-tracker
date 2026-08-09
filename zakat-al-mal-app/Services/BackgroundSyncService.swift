@@ -154,6 +154,15 @@ enum BackgroundSyncService {
 
         try? context.save()
 
+        // 5b. Record each account's balance for the current month + re-arm the
+        //     end-of-month expense reminder so it stays a month ahead.
+        AccountHistoryStore.upsertCurrentMonth(assets: assets, context: context)
+        if notificationsEnabled,
+           let settings = try? context.fetch(FetchDescriptor<AppSettings>()).first,
+           settings.monthlyExpenseReminderEnabled {
+            NotificationService.scheduleMonthlyExpenseReview(hour: settings.monthlyExpenseReminderHour)
+        }
+
         // 6. Schedule hawl reminder (future-dated).
         if notificationsEnabled,
            let hawl = activeHawl, hawl.status == .inProgress,

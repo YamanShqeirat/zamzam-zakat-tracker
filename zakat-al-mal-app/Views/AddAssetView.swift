@@ -12,10 +12,12 @@ struct AddAssetView: View {
     @State private var category: AssetCategory = .cash
     @State private var balance: Decimal = 0
     @State private var weight: Decimal = 0
+    @State private var weightUnit: WeightUnit = .grams
     @State private var notes: String = ""
 
     private var settings: AppSettings? { settingsList.first }
     private var isMetal: Bool { category == .gold || category == .silver }
+    /// Spot price is stored per gram; expose a per-selected-unit figure too.
     private var spotPrice: Decimal {
         switch category {
         case .gold:   return settings?.cachedGoldPricePerGram ?? 0
@@ -23,8 +25,11 @@ struct AddAssetView: View {
         default:      return 0
         }
     }
+    private var spotPricePerUnit: Decimal { spotPrice * weightUnit.gramsPerUnit }
+    /// Entered weight converted to canonical grams for storage/value.
+    private var weightInGrams: Decimal { weight * weightUnit.gramsPerUnit }
     private var estimatedValue: Decimal {
-        weight * spotPrice
+        weightInGrams * spotPrice
     }
     private var canSave: Bool {
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
@@ -48,11 +53,15 @@ struct AddAssetView: View {
 
             if isMetal {
                 Section("Weight") {
-                    TextField("Grams", value: $weight, format: .number)
+                    Picker("Unit", selection: $weightUnit) {
+                        ForEach(WeightUnit.allCases) { Text($0.displayName).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    TextField("Weight (\(weightUnit.abbrev))", value: $weight, format: .number)
                         .keyboardType(.decimalPad)
                     if spotPrice > 0 {
                         LabeledContent("Spot price") {
-                            Text("\(spotPrice.formatted(.currency(code: "USD")))/g")
+                            Text("\(spotPricePerUnit.formatted(.currency(code: "USD")))/\(weightUnit.abbrev)")
                         }
                         LabeledContent("Estimated value") {
                             CurrencyText(amount: estimatedValue).bold()
@@ -100,7 +109,8 @@ struct AddAssetView: View {
                 name: name.trimmingCharacters(in: .whitespaces),
                 category: category,
                 balance: estimatedValue,
-                weightInGrams: weight,
+                weightInGrams: weightInGrams,
+                weightUnit: weightUnit,
                 notes: trimmedNotes,
                 context: modelContext
             )
@@ -109,7 +119,8 @@ struct AddAssetView: View {
                 name: name.trimmingCharacters(in: .whitespaces),
                 category: category,
                 balance: balance,
-                weightInGrams: isMetal && weight > 0 ? weight : nil,
+                weightInGrams: isMetal && weight > 0 ? weightInGrams : nil,
+                weightUnit: weightUnit,
                 notes: trimmedNotes,
                 context: modelContext
             )

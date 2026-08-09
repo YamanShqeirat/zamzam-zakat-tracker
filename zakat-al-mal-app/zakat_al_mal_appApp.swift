@@ -19,6 +19,10 @@ struct zakat_al_mal_appApp: App {
             NisabSnapshot.self,
             ZakatPayment.self,
             AppSettings.self,
+            BudgetCategory.self,
+            BudgetEntry.self,
+            FinanceTransaction.self,
+            AccountBalanceSnapshot.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
