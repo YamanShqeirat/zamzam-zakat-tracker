@@ -1,7 +1,6 @@
 import Foundation
 import Observation
 import SwiftData
-import WidgetKit
 
 @Observable
 final class DashboardViewModel {
@@ -63,8 +62,31 @@ final class DashboardViewModel {
 
         // 6. Hijri label, widget snapshot, hawl-reminder schedule.
         hijriDateString = engine.hawlTracker.hijriDateString(for: Date())
-        publishWidgetSnapshot(assets: assets)
+        publishWidgetSnapshot(assets: assets, modelContext: modelContext)
         scheduleHawlReminderIfNeeded(modelContext: modelContext)
+    }
+
+    /// Wires the network services from the Keychain, then refreshes. Shared by
+    /// the Overview action row (which owns the Refresh button) and the Zakat
+    /// tab's pull-to-refresh so both take the identical path.
+    func reload(
+        assets: [Asset],
+        activeHawl: HawlRecord?,
+        modelContext: ModelContext,
+        force: Bool
+    ) async {
+        if let accessURL = KeychainService.load(key: KeychainKey.simplefinAccessURL) {
+            financialService = SimpleFINService(accessURL: accessURL)
+        } else {
+            financialService = nil
+        }
+        if let apiKey = KeychainService.load(key: KeychainKey.goldAPIKey) {
+            goldPriceService = CachedGoldPriceService(primaryService: GoldAPIService(apiKey: apiKey))
+        } else {
+            goldPriceService = nil
+        }
+        currentHawl = activeHawl
+        await refresh(assets: assets, modelContext: modelContext, force: force)
     }
 
     // MARK: - Section helpers
@@ -205,33 +227,21 @@ final class DashboardViewModel {
         }
     }
 
-    private func publishWidgetSnapshot(assets: [Asset]) {
-        SharedAppGroup.write(.init(
-            totalZakatableWealth: totalZakatableWealth,
-            currentNisab: currentNisab,
-            daysRemaining: daysRemainingInHawl,
-            estimatedZakat: zakatDueAmount > 0
-                ? zakatDueAmount
-                : totalZakatableWealth * ZakatEngine.zakatRate,
-            isAboveNisab: isAboveNisab,
-            lastUpdated: Date(),
-            hasData: true,
-            breakdown: Self.breakdown(from: assets)
-        ))
-        WidgetCenter.shared.reloadAllTimelines()
-    }
-
-    static func breakdown(from assets: [Asset]) -> [SharedAppGroup.CategorySlice] {
-        let grouped = Dictionary(grouping: assets.filter(\.isActive), by: \.category)
-        return grouped
-            .map { category, items in
-                SharedAppGroup.CategorySlice(
-                    category: category.rawValue,
-                    amount: items.reduce(Decimal.zero) { $0 + $1.zakatableAmount }
-                )
-            }
-            .filter { $0.amount > 0 }
-            .sorted { $0.amount > $1.amount }
+    private func publishWidgetSnapshot(assets: [Asset], modelContext: ModelContext) {
+        WidgetSnapshotBuilder.publish(
+            state: .init(
+                totalZakatableWealth: totalZakatableWealth,
+                currentNisab: currentNisab,
+                daysRemaining: daysRemainingInHawl,
+                estimatedZakat: zakatDueAmount > 0
+                    ? zakatDueAmount
+                    : totalZakatableWealth * ZakatEngine.zakatRate,
+                isAboveNisab: isAboveNisab,
+                hawl: currentHawl
+            ),
+            assets: assets,
+            context: modelContext
+        )
     }
 
     private func scheduleHawlReminderIfNeeded(modelContext: ModelContext) {

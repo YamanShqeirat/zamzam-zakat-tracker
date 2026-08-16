@@ -2,9 +2,9 @@ import Charts
 import SwiftData
 import SwiftUI
 
-/// The "Investments" tab: savings & investments breakdown (from assets),
-/// account balances over time, and the wealth-vs-nisab trend. Read-only charts;
-/// asset editing lives behind the "Manage assets" link.
+/// The "Investments" tab: savings & investments breakdown (from assets) and
+/// account balances over time. Read-only charts — asset editing lives on the
+/// Overview tab, which is the app's single home for asset management.
 struct InvestmentsView: View {
     @Query private var assets: [Asset]
     @Query private var accountSnapshots: [AccountBalanceSnapshot]
@@ -65,7 +65,6 @@ struct InvestmentsView: View {
             VStack(spacing: 18) {
                 savingsCard
                 accountsCard
-                manageLink
                 disclaimer
             }
             .padding(16)
@@ -85,7 +84,7 @@ struct InvestmentsView: View {
             cardHeader("SAVINGS & INVESTMENTS")
             if slices.isEmpty {
                 emptyState(symbol: "chart.pie",
-                           text: "Add assets in the Zakat tab to see how your savings and investments break down.")
+                           text: "Add assets from the Overview tab to see how your savings and investments break down.")
             } else {
                 AssetDistributionChart(slices: slices, total: totalWealth)
             }
@@ -146,26 +145,6 @@ struct InvestmentsView: View {
             }
         }
         .cardBackground()
-    }
-
-    // MARK: - Manage
-
-    private var manageLink: some View {
-        NavigationLink {
-            AssetListView()
-        } label: {
-            HStack {
-                Label("Manage assets", systemImage: "slider.horizontal.3")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(AppTheme.textPrimary)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption.bold())
-                    .foregroundStyle(AppTheme.textTertiary)
-            }
-            .padding(16)
-            .background(AppTheme.card, in: .rect(cornerRadius: 12))
-        }
     }
 
     private var disclaimer: some View {

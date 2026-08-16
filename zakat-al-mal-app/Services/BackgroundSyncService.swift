@@ -1,7 +1,6 @@
 import BackgroundTasks
 import Foundation
 import SwiftData
-import WidgetKit
 
 /// Daily background refresh.
 ///
@@ -187,18 +186,19 @@ enum BackgroundSyncService {
             }
         }
 
-        // 8. Publish snapshot to widget + reload timeline.
-        SharedAppGroup.write(.init(
-            totalZakatableWealth: totalWealth,
-            currentNisab: nisab,
-            daysRemaining: daysRemaining,
-            estimatedZakat: zakatDue > 0 ? zakatDue : totalWealth * ZakatEngine.zakatRate,
-            isAboveNisab: isAbove,
-            lastUpdated: Date(),
-            hasData: true,
-            breakdown: DashboardViewModel.breakdown(from: assets)
-        ))
-        WidgetCenter.shared.reloadAllTimelines()
+        // 8. Publish snapshot to the widgets + reload their timelines.
+        WidgetSnapshotBuilder.publish(
+            state: .init(
+                totalZakatableWealth: totalWealth,
+                currentNisab: nisab,
+                daysRemaining: daysRemaining,
+                estimatedZakat: zakatDue > 0 ? zakatDue : totalWealth * ZakatEngine.zakatRate,
+                isAboveNisab: isAbove,
+                hawl: activeHawl
+            ),
+            assets: assets,
+            context: context
+        )
     }
 
     // MARK: - Helpers

@@ -3,15 +3,21 @@ import SwiftUI
 
 /// The "Overview" home tab: a spreadsheet-style summary of the current year —
 /// income, expenses, balance, % of income spent — plus a net-worth figure and a
-/// compact Zakat status glance. Everything here is read-only; entry happens in
-/// the Budget and Zakat tabs.
+/// compact Zakat status glance. Budget figures are entered in the Budget tab;
+/// this screen owns asset management (add / manage / refresh) so those controls
+/// live in exactly one place.
 struct OverviewView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query private var categories: [BudgetCategory]
     @Query private var entries: [BudgetEntry]
     @Query private var transactions: [FinanceTransaction]
     @Query private var assets: [Asset]
     @Query(sort: \HawlRecord.hawlStartDate, order: .reverse) private var hawls: [HawlRecord]
     @Query private var settingsList: [AppSettings]
+
+    @State private var vm = DashboardViewModel()
+    @State private var assetVM = AssetViewModel()
+    @State private var showAddOptions = false
 
     private var year: Int { Calendar.current.component(.year, from: Date()) }
 
@@ -46,11 +52,15 @@ struct OverviewView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 18) {
+                if let err = vm.errorMessage, !err.isEmpty {
+                    errorBanner(err)
+                }
                 summaryCard
                 statGrid
                 if !groupBreakdown.isEmpty {
                     breakdownCard
                 }
+                assetActions
                 zakatGlance
             }
             .padding(16)
@@ -61,6 +71,100 @@ struct OverviewView: View {
         .navigationTitle("Overview")
         .toolbarBackground(AppTheme.background, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .task { await reload(force: false) }
+        .refreshable { await reload(force: true) }
+        .confirmationDialog("Add asset", isPresented: $showAddOptions, titleVisibility: .visible) {
+            Button("Add Manual Asset") { assetVM.showingAddAsset = true }
+            Button("Link via SimpleFIN") { assetVM.showingSimpleFINSetup = true }
+            Button("Cancel", role: .cancel) {}
+        }
+        .sheet(isPresented: $assetVM.showingAddAsset) {
+            NavigationStack { AddAssetView(vm: assetVM) }
+        }
+        .sheet(isPresented: $assetVM.showingSimpleFINSetup) {
+            NavigationStack { SimpleFINSetupView() }
+        }
+    }
+
+    // MARK: - Asset management
+
+    /// The app's single home for asset controls — adding, editing and
+    /// refreshing balances. Deliberately not duplicated on the Zakat or
+    /// Investments tabs.
+    private var assetActions: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                NavigationLink {
+                    AssetListView()
+                } label: {
+                    ActionTile(title: "Manage", systemImage: "slider.horizontal.3")
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    showAddOptions = true
+                } label: {
+                    ActionTile(title: "Add asset", systemImage: "plus")
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    Task { await reload(force: true) }
+                } label: {
+                    ActionTile(
+                        title: vm.isLoading ? "Refreshing…" : "Refresh",
+                        systemImage: "arrow.clockwise",
+                        isBusy: vm.isLoading
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(vm.isLoading)
+            }
+
+            if let synced = lastUpdated {
+                Text("Balances updated \(synced, format: .relative(presentation: .named))")
+                    .font(.caption2)
+                    .foregroundStyle(AppTheme.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    /// Most recent successful sync we can report — the SimpleFIN pull if there
+    /// is one, else the last gold-price refresh.
+    private var lastUpdated: Date? {
+        [vm.lastSyncDate, settings?.lastSimpleFINSync, settings?.lastGoldPriceRefresh]
+            .compactMap { $0 }
+            .max()
+    }
+
+    private func errorBanner(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(AppTheme.warning)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Sync issue").font(.subheadline.bold()).foregroundStyle(AppTheme.textPrimary)
+                Text(message).font(.caption).foregroundStyle(AppTheme.textSecondary)
+            }
+            Spacer(minLength: 0)
+            Button {
+                vm.errorMessage = nil
+            } label: {
+                Image(systemName: "xmark.circle.fill").foregroundStyle(AppTheme.textTertiary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(12)
+        .background(AppTheme.warningSoft, in: .rect(cornerRadius: 12))
+    }
+
+    private func reload(force: Bool) async {
+        await vm.reload(
+            assets: assets,
+            activeHawl: activeHawl,
+            modelContext: modelContext,
+            force: force
+        )
     }
 
     // MARK: - Summary
@@ -217,6 +321,42 @@ private struct GroupBreakdownRow: View {
             }
             .frame(height: 3)
         }
+    }
+}
+
+/// One button in the Overview's asset-management row.
+private struct ActionTile: View {
+    let title: String
+    let systemImage: String
+    var isBusy: Bool = false
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Group {
+                if isBusy {
+                    ProgressView().controlSize(.small).tint(AppTheme.accent)
+                } else {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(AppTheme.accent)
+                }
+            }
+            .frame(height: 20)
+
+            Text(title)
+                .font(.caption.bold())
+                .foregroundStyle(AppTheme.textPrimary)
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(AppTheme.card, in: .rect(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(AppTheme.divider, lineWidth: 1)
+        )
+        .contentShape(.rect)
     }
 }
 

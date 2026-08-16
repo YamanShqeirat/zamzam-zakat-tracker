@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/iOS-17%2B-blue" alt="iOS 17+">
-  <img src="https://img.shields.io/badge/Swift-5.9-orange" alt="Swift 5.9">
+  <img src="https://img.shields.io/badge/iOS-26.2%2B-blue" alt="iOS 26.2+">
+  <img src="https://img.shields.io/badge/Xcode-26%2B-orange" alt="Xcode 26+">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License">
 </p>
 
@@ -28,7 +28,9 @@ ZamZam is an iOS app that automates Zakat al-Mal (obligatory annual charity) cal
 - **Live nisab calculation** — 85 grams of gold at current market price, updated daily via [GoldAPI.io](https://www.goldapi.io)
 - **Hijri lunar calendar** — hawl tracking uses the Umm al-Qura Islamic calendar (~354 days), not the Gregorian calendar
 - **Continuous hawl tracking with reset** — if your wealth drops below nisab at any daily check, the hawl resets and restarts when wealth returns to nisab
-- **Home screen and lock screen widgets** — glanceable status without opening the app
+- **Budget and investments tracking** — a monthly income/expense grid, net-worth breakdown, and per-account balance history alongside the zakat side of the app
+- **Charts throughout** — wealth vs nisab, giving history, the Hijri calendar infographic, asset distribution, account balances, income vs expenses, and expenses by category
+- **A home screen widget for every chart** — glanceable status without opening the app (see [Widgets](#widgets))
 - **Smart notifications** — reminders at 30 days, 7 days, and when zakat is due
 - **Payment recording** — track when and where you paid your zakat
 - **Manual asset entry** — for physical cash, gold, silver, and anything SimpleFIN can't see
@@ -49,11 +51,45 @@ If your school of thought or scholar advises different rules (bookend nisab trac
 
 ---
 
+## Using the app
+
+Five tabs, each with one job:
+
+| Tab | What's there |
+|-----|--------------|
+| **Overview** | Year summary (income, expenses, balance, % of income spent), net worth and zakatable wealth, net-worth breakdown by asset group, a zakat status glance — and the app's asset controls: **Manage**, **Add asset**, **Refresh** |
+| **Budget** | The monthly income/expense entry grid, plus income vs expenditure, income vs expenses by month, and expenses by category |
+| **Investments** | Savings & investments distribution and per-account balance history. Read-only |
+| **Zakat** | The hawl countdown ring, nisab status, payment recording, and the analytics cards inline — at a glance, wealth vs nisab, the Hijri calendar, and giving history |
+| **Settings** | SimpleFIN connection, GoldAPI key, notification preferences, CSV export, reset |
+
+**Asset management lives in exactly one place: the Overview tab.** Adding, editing, deleting, and refreshing assets all start there (Manage pushes the full asset list); no other screen duplicates those controls. Settings still holds the SimpleFIN *connection* itself, since that's a credential rather than an asset.
+
+---
+
+## Widgets
+
+Every chart in the app has a home screen widget, all rendering from a cached snapshot in the App Group container — no database access and no network calls from the widget process.
+
+| Widget | Sizes | Shows |
+|--------|-------|-------|
+| **Zakat Tracker** | Small, Medium | Hawl countdown ring (small); wealth distribution donut with legend (medium) |
+| **Hijri Calendar** | Small, Medium | The 12-month lunar ring with today's position and a moon tracking the year; medium adds hawl day *x* of *y* |
+| **Wealth vs Nisab** | Medium, Large | Zakatable wealth over time against the nisab threshold |
+| **Zakat Given** | Small, Medium | Lifetime zakat paid (small); giving per Hijri year (medium) |
+| **Account Balances** | Medium, Large | Each account's end-of-month balance; large adds the month-over-month change per account |
+| **Income vs Expenses** | Small, Medium, Large | Year totals and share of income spent (small); the twelve months side by side (medium/large) |
+| **Expenses by Category** | Medium, Large | This year's spending per category, largest first, in each category's colour |
+
+The snapshot is rewritten on every foreground refresh and on the daily background sync, then all timelines reload. **Open the app once after installing an update** — widgets show their empty state until the app has written a snapshot.
+
+---
+
 ## Prerequisites
 
 Before you build, you'll need:
 
-1. **A Mac** with [Xcode 15+](https://developer.apple.com/xcode/) installed
+1. **A Mac** with [Xcode 26+](https://developer.apple.com/xcode/) installed — the project targets iOS 26.2 and uses synchronized folder groups
 2. **An Apple Developer account** — free accounts work for personal use (7-day sideloading). A [$99/year paid account](https://developer.apple.com/programs/) lets you install permanently
 3. **A SimpleFIN Bridge account** — [$15/year](https://beta-bridge.simplefin.org) for automated balance syncing. Connect your banks and brokerages through their dashboard
 4. **A GoldAPI.io account** — [free tier](https://www.goldapi.io) provides ~300 requests/month (the app needs ~30)
@@ -88,8 +124,7 @@ Find-and-replace `yamanshqeirat` with your namespace in these locations:
 | `zakat-al-mal-app/zakat-al-mal-app.entitlements` | App Group entry |
 | `ZakatWidgetExtension.entitlements` | App Group entry |
 | `zakat-al-mal-app/Services/BackgroundSyncService.swift` | `BGTask` identifier `com.yamanshqeirat.zakat-al-mal-app.dailysync` |
-| `zakat-al-mal-app.xcodeproj/project.pbxproj` | `PRODUCT_BUNDLE_IDENTIFIER` for both the app and widget targets |
-| `zakat-al-mal-app/Info.plist` | `BGTaskSchedulerPermittedIdentifiers` (must match `BackgroundSyncService.swift`) |
+| `zakat-al-mal-app.xcodeproj/project.pbxproj` | `PRODUCT_BUNDLE_IDENTIFIER` for both the app and widget targets, and `INFOPLIST_KEY_BGTaskSchedulerPermittedIdentifiers` (the app's Info.plist is generated, so the identifier lives in build settings and must match `BackgroundSyncService.swift`) |
 
 ### 4. Configure signing
 
@@ -162,6 +197,7 @@ ZamZam follows MVVM with a clean domain layer that has zero Apple framework depe
 - **`ZakatEngine`** — Core calculation orchestrator. Computes zakatable wealth, evaluates hawl status, calculates the 2.5% obligation.
 - **`HawlTracker`** — Manages the Hijri lunar year cycle. Computes hawl start/end dates, days remaining, and whether the hawl is complete.
 - **`NisabMonitor`** — Computes the nisab threshold (85g gold × current price per gram) and checks whether total wealth meets it.
+- **`BudgetCalculator`** — Pure aggregation over the budget models. Every figure the Budget and Overview screens show (and every budget widget) is derived here, so a typed monthly amount and itemised transactions never double-count.
 
 ### Data Flow
 
@@ -169,8 +205,9 @@ ZamZam follows MVVM with a clean domain layer that has zero Apple framework depe
 2. **GoldAPI** fetches the current gold price once per day
 3. **NisabMonitor** computes the threshold from the gold price
 4. **ZakatEngine** sums zakatable assets, checks against nisab, evaluates hawl
-5. **Widget** reads shared data from the App Group container
-6. **Notifications** fire at hawl milestones and when zakat becomes due
+5. **WidgetSnapshotBuilder** projects the results — plus the wealth, giving, account, and budget series behind each chart — into the App Group container, then reloads every widget timeline
+6. **Widgets** read that snapshot; they never touch SwiftData or the network
+7. **Notifications** fire at hawl milestones and when zakat becomes due
 
 ---
 
@@ -178,15 +215,19 @@ ZamZam follows MVVM with a clean domain layer that has zero Apple framework depe
 
 ```
 zakat-al-mal-app/
-├── App/                    # App entry point, background task registration
-├── Domain/                 # ZakatEngine, HawlTracker, NisabMonitor
-├── Models/                 # SwiftData models (Asset, HawlRecord, etc.)
-├── Services/               # SimpleFIN client, GoldAPI client, Keychain
-├── ViewModels/             # Dashboard, Asset, Payment view models
-├── Views/                  # All SwiftUI screens and components
-├── Widget/                 # WidgetKit extension
-└── Resources/              # Assets, colors, app icon
+├── zakat-al-mal-app/       # Main app target
+│   ├── Domain/             # ZakatEngine, HawlTracker, NisabMonitor, BudgetCalculator
+│   ├── Models/             # SwiftData models (Asset, HawlRecord, BudgetEntry, etc.)
+│   ├── Services/           # SimpleFIN + GoldAPI clients, Keychain, background sync,
+│   │                       #   SharedAppGroup, WidgetSnapshotBuilder
+│   ├── ViewModels/         # Dashboard, Asset, Payment view models
+│   ├── Views/              # SwiftUI screens (one per tab) + Components/
+│   └── Assets.xcassets/    # Colors, app icon
+└── ZakatWidget/            # WidgetKit extension — one file per widget,
+                            #   plus WidgetSupport.swift and a copy of SharedAppGroup.swift
 ```
+
+`ZakatWidget/SharedAppGroup.swift` is a verbatim copy of the app's version — the two targets each compile their own. If you change the snapshot shape, change both.
 
 ---
 
@@ -207,6 +248,15 @@ Add a new case to `AssetCategory` in `Models/Asset.swift` and update the `zakata
 ### Using a different gold price API
 
 Implement the `GoldPriceService` protocol with your preferred provider. The app uses one daily request, so any free-tier API will work.
+
+### Adding a chart and its widget
+
+1. Add the series to `SharedAppGroup.Snapshot` and its `write`/`read` — in **both** copies of `SharedAppGroup.swift`.
+2. Aggregate it in `WidgetSnapshotBuilder.snapshot(state:assets:context:)`, capping the series so the payload stays small.
+3. Add sample values to `ZakatWidgetEntry.sampleSnapshot` so the widget gallery has something to draw.
+4. Create a `Widget` in `ZakatWidget/` (reuse `ZakatWidgetProvider` — every widget reads the same snapshot) and register it in `ZakatWidgetBundle`.
+
+Both targets use Xcode's synchronized folder groups, so new files are picked up without touching the project file.
 
 ---
 

@@ -2,7 +2,11 @@ import Charts
 import SwiftData
 import SwiftUI
 
-struct AnalyticsView: View {
+/// The zakat analytics cards — at-a-glance tiles, wealth vs nisab, the Hijri
+/// calendar infographic and giving history. Embedded directly in
+/// `DashboardView` (the Zakat tab) rather than living behind a navigation push,
+/// so the tracker and its analytics are one screen.
+struct AnalyticsSections: View {
     @Query private var assets: [Asset]
     @Query(sort: \NisabSnapshot.date, order: .forward) private var snapshots: [NisabSnapshot]
     @Query(sort: \HawlRecord.hawlStartDate, order: .reverse) private var hawls: [HawlRecord]
@@ -73,22 +77,12 @@ struct AnalyticsView: View {
     // MARK: - Body
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                insightsStrip
-                wealthOverTimeCard
-                lunarCard
-                givingCard
-                disclaimer
-            }
-            .padding(16)
+        VStack(spacing: 18) {
+            insightsStrip
+            wealthOverTimeCard
+            lunarCard
+            givingCard
         }
-        .scrollContentBackground(.hidden)
-        .background(AppBackground().ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle("Analytics")
-        .toolbarBackground(AppTheme.background, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
     }
 
     // MARK: - Insights strip
@@ -248,17 +242,6 @@ struct AnalyticsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(AppTheme.card, in: .rect(cornerRadius: 14))
-    }
-
-    // MARK: - Disclaimer
-
-    private var disclaimer: some View {
-        Text("Charts are for personal insight only and are not financial advice.")
-            .font(.caption2)
-            .foregroundStyle(AppTheme.textTertiary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 8)
-            .padding(.top, 4)
     }
 
     // MARK: - Small helpers
@@ -544,7 +527,10 @@ private struct GivingBucket: Identifiable {
 }
 
 #Preview {
-    NavigationStack { AnalyticsView() }
+    ScrollView {
+        AnalyticsSections().padding(16)
+    }
+    .background(AppBackground().ignoresSafeArea())
         .modelContainer(for: [Asset.self, HawlRecord.self, NisabSnapshot.self, ZakatPayment.self, AppSettings.self, BudgetCategory.self, BudgetEntry.self, FinanceTransaction.self, AccountBalanceSnapshot.self], inMemory: true)
         .preferredColorScheme(.dark)
 }

@@ -17,39 +17,8 @@ struct ZakatWidgetEntryView: View {
     }
 }
 
-// MARK: - Category resolver
-// Widget-local mirror of the main app's `AssetCategory+Display` so the widget
-// target doesn't depend on the SwiftData model. Keep colors in sync.
-
-private enum WidgetCategory {
-    static func color(for key: String) -> Color {
-        switch key {
-        case "brokerage":   return Color(red: 0x8B/255, green: 0x5C/255, blue: 0xF6/255)
-        case "bankAccount": return Color(red: 0x2D/255, green: 0xD4/255, blue: 0xA8/255)
-        case "gold":        return Color(red: 0xF5/255, green: 0x9E/255, blue: 0x0B/255)
-        case "silver":      return Color(red: 0xCB/255, green: 0xD5/255, blue: 0xE1/255)
-        case "cash":        return Color(red: 0x64/255, green: 0x74/255, blue: 0x8B/255)
-        case "crypto":      return Color(red: 0xFB/255, green: 0x92/255, blue: 0x3C/255)
-        case "retirement":  return Color(red: 0x3B/255, green: 0x82/255, blue: 0xF6/255)
-        case "receivable":  return Color(red: 0xEC/255, green: 0x48/255, blue: 0x99/255)
-        default:            return Color(red: 0x9C/255, green: 0xA3/255, blue: 0xAF/255)
-        }
-    }
-
-    static func displayName(for key: String) -> String {
-        switch key {
-        case "cash":        return "Cash"
-        case "bankAccount": return "Bank Account"
-        case "brokerage":   return "Brokerage"
-        case "crypto":      return "Crypto"
-        case "gold":        return "Gold"
-        case "silver":      return "Silver"
-        case "retirement":  return "Retirement"
-        case "receivable":  return "Receivable"
-        default:            return "Other"
-        }
-    }
-}
+// Category colours/labels live in `WidgetSupport.swift` (`WidgetCategory`),
+// shared with the other chart widgets.
 
 // MARK: - Small: countdown ring
 
@@ -57,13 +26,13 @@ private struct SmallView: View {
     let snapshot: SharedAppGroup.Snapshot
 
     private var progress: Double {
-        let total = 354.0 // Hijri year approximation
+        let total = Double(max(1, snapshot.hawlTotalDays))
         let remaining = Double(snapshot.daysRemaining)
         return max(0, min(1, (total - remaining) / total))
     }
 
     private var ringTint: Color {
-        snapshot.isAboveNisab ? Color(red: 0x2D/255, green: 0xD4/255, blue: 0xA8/255) : .gray
+        snapshot.isAboveNisab ? WidgetTheme.accent : .gray
     }
 
     var body: some View {

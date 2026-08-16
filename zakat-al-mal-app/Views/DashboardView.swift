@@ -8,10 +8,8 @@ struct DashboardView: View {
 
     @State private var vm = DashboardViewModel()
     @State private var showingPaymentSheet = false
-    @State private var showingAddAsset = false
 
     private let hawlTracker = HawlTracker()
-    private let addAssetVM = AssetViewModel()
 
     // MARK: - Derived state
 
@@ -70,7 +68,9 @@ struct DashboardView: View {
                     progressToNisabSection
                 }
 
-                bottomButtons
+                // Analytics used to be a separate screen behind a toolbar
+                // button; the charts now live inline on the tracker itself.
+                AnalyticsSections()
 
                 disclaimer
             }
@@ -80,25 +80,12 @@ struct DashboardView: View {
         .background(AppBackground().ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Zakat tracker")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    AnalyticsView()
-                } label: {
-                    Image(systemName: "chart.xyaxis.line")
-                        .foregroundStyle(AppTheme.textSecondary)
-                }
-            }
-        }
         .toolbarBackground(AppTheme.background, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task { await reload(force: false) }
         .refreshable { await reload(force: true) }
         .sheet(isPresented: $showingPaymentSheet) {
             NavigationStack { PaymentView(hawlRecord: vm.currentHawl) }
-        }
-        .sheet(isPresented: $showingAddAsset) {
-            NavigationStack { AddAssetView(vm: addAssetVM) }
         }
     }
 
@@ -250,7 +237,7 @@ struct DashboardView: View {
             if !hasActiveAssets {
                 setupRow(symbol: "link",
                          title: "Add your first asset",
-                         detail: "Link an account via SimpleFIN or add a manual asset using the button below.")
+                         detail: "Use “Add asset” on the Overview tab to link an account via SimpleFIN or enter one manually.")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -265,33 +252,6 @@ struct DashboardView: View {
                 Text(title).font(.subheadline).foregroundStyle(AppTheme.textPrimary)
                 Text(detail).font(.caption).foregroundStyle(AppTheme.textSecondary)
             }
-        }
-    }
-
-    // MARK: - Bottom buttons
-
-    private var bottomButtons: some View {
-        HStack(spacing: 12) {
-            actionButton(title: "+ Add asset") { showingAddAsset = true }
-            actionButton(title: vm.isLoading ? "Refreshing…" : "Refresh") {
-                Task { await reload(force: true) }
-            }
-            .disabled(vm.isLoading)
-        }
-    }
-
-    private func actionButton(title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline.bold())
-                .foregroundStyle(AppTheme.textPrimary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(AppTheme.card, in: .rect(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppTheme.divider, lineWidth: 1)
-                )
         }
     }
 
@@ -318,7 +278,7 @@ struct DashboardView: View {
     }
 
     private var disclaimer: some View {
-        Text("This app assists with Zakat calculation. Consult a qualified scholar for specific rulings.")
+        Text("This app assists with Zakat calculation and its charts are for personal insight only. Consult a qualified scholar for specific rulings.")
             .font(.caption2)
             .foregroundStyle(AppTheme.textTertiary)
             .multilineTextAlignment(.center)
@@ -329,18 +289,12 @@ struct DashboardView: View {
     // MARK: - Reload
 
     private func reload(force: Bool) async {
-        if let accessURL = KeychainService.load(key: KeychainKey.simplefinAccessURL) {
-            vm.financialService = SimpleFINService(accessURL: accessURL)
-        } else {
-            vm.financialService = nil
-        }
-        if let apiKey = KeychainService.load(key: KeychainKey.goldAPIKey) {
-            vm.goldPriceService = CachedGoldPriceService(primaryService: GoldAPIService(apiKey: apiKey))
-        } else {
-            vm.goldPriceService = nil
-        }
-        vm.currentHawl = activeHawl
-        await vm.refresh(assets: assets, modelContext: modelContext, force: force)
+        await vm.reload(
+            assets: assets,
+            activeHawl: activeHawl,
+            modelContext: modelContext,
+            force: force
+        )
     }
 
     private func shortHijri(_ date: Date) -> String {
